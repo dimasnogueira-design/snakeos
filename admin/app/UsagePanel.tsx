@@ -1,9 +1,11 @@
 'use client';
-import {useState} from 'react';
+import {useState,useEffect} from 'react';
 type Usage={currency:string;today:{costMicros:number;tokens:number};month:{costMicros:number;tokens:number};pendingMicros:number;features:Array<{purpose:string;model:string;status:string;calls:number;tokens:string;cached_tokens:string;cost_micros:string}>;circuit:{open:boolean;reason?:string};limits:{dailyUsd:number;monthlyUsd:number;softRatio:number};dryRun:boolean;mock:boolean};
 const usd=(micros:number)=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'USD',maximumFractionDigits:4}).format(micros/1e6);
 export default function UsagePanel({usage,onAction}:{usage:Usage|null;onAction:(path:string,method:string,body:unknown)=>Promise<void>}) {
   const [daily,setDaily]=useState('1'),[monthly,setMonthly]=useState('15'),[error,setError]=useState('');
+  const dailyLimit=usage?.limits.dailyUsd,monthlyLimit=usage?.limits.monthlyUsd;
+  useEffect(()=>{if(dailyLimit!==undefined)setDaily(String(dailyLimit));if(monthlyLimit!==undefined)setMonthly(String(monthlyLimit));},[dailyLimit,monthlyLimit]);
   async function action(path:string,body:unknown){try{await onAction(path,'PATCH',body);setError('');}catch{setError('Não foi possível salvar. Confira os limites.');}}
   return <section className="panel"><div className="panelHead"><div><p className="eyebrow">ORÇAMENTO DA INTELIGÊNCIA</p><h2>Consumo OpenAI</h2></div><span className="pill">{usage?.dryRun||usage?.mock?'Simulação · sem chamadas pagas':usage?.circuit.open?'Gasto bloqueado':'Dentro do orçamento'}</span></div>
     <div className="metrics"><article><span>Hoje · São Paulo</span><b>{usd(usage?.today.costMicros??0)}</b><small>{usage?.today.tokens??0} tokens</small></article><article><span>Mês atual</span><b>{usd(usage?.month.costMicros??0)}</b><small>{usage?.month.tokens??0} tokens</small></article><article><span>Reservas pendentes</span><b>{usd(usage?.pendingMicros??0)}</b></article><article><span>Bloqueio preventivo</span><b>{Math.round((usage?.limits.softRatio??.8)*100)}%</b><small>do limite diário ou mensal</small></article></div>
