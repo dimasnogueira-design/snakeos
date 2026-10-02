@@ -8,5 +8,5 @@ $secret = Read-Host 'Cole sua chave OpenAI API (entrada oculta)' -AsSecureString
 if ($secret.Length -lt 20) { throw 'Chave incompleta; nenhuma alteracao realizada.' }
 $secret | Export-Clixml -LiteralPath 'data/private/openai-key.xml'
 $settings | Add-Member -NotePropertyName aiEnabled -NotePropertyValue $true -Force
-$settings | ConvertTo-Json | Set-Content -LiteralPath $settingsPath -Encoding utf8
+[IO.File]::WriteAllText((Join-Path $PSScriptRoot $settingsPath), ($settings | ConvertTo-Json), (New-Object Text.UTF8Encoding($false)))
 Write-Host 'Chave protegida pelo Windows para este usuario. Reinicie o SNAKE pelo Iniciar-Snake.cmd.'

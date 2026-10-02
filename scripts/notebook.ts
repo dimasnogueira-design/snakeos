@@ -6,7 +6,7 @@ import {spawn} from 'node:child_process';
 import {config} from 'dotenv';
 config({path:'.env'});
 let aiSettings:{testContactId?:string,aiEnabled?:boolean}={};
-try{aiSettings=JSON.parse(await readFile('data/private/ai-test-settings.json','utf8'));}catch(error:any){if(error.code!=='ENOENT')throw error;}
+try{aiSettings=JSON.parse((await readFile('data/private/ai-test-settings.json','utf8')).replace(/^\uFEFF/,''));}catch(error:any){if(error.code!=='ENOENT')throw error;}
 const paidTest=Boolean(aiSettings.aiEnabled && aiSettings.testContactId && process.env.OPENAI_API_KEY);
 process.env.AI_TEST_ONLY='true';process.env.AI_TEST_CONTACT_IDS=aiSettings.testContactId??'';
 process.env.OPENAI_MODEL_FAST='gpt-4.1-mini';process.env.OPENAI_MODEL_NEGOTIATION='gpt-4.1';

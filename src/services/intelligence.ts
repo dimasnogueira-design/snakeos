@@ -10,8 +10,8 @@ export const POLICY=`Venom Code atende por texto. Christian: Projetos e Comercia
 const Fact=z.object({key:z.string().max(80),value:z.string().max(350),source:z.string().max(100),confirmed:z.boolean()});
 export const MemorySchema=z.object({goal:z.string().max(350),pain:z.string().max(350),summary:z.string().max(1500),facts:z.array(Fact).max(24),
   openQuestions:z.array(z.string().max(250)).max(12),commitments:z.array(z.object({text:z.string().max(350),source:z.string().max(100),confirmed:z.boolean()})).max(12),
-  decisions:z.array(z.string().max(250)).max(12),nextAction:z.string().max(350),persona:z.enum(['CHRISTIAN','JULLY']),
-  tone:z.record(z.union([z.string().max(40),z.number().min(0).max(1)]))});
+  decisions:z.array(z.string().max(250)).max(12),nextAction:z.string().max(350),persona:z.enum(['CHRISTIAN','JULLY']).default('JULLY'),
+  tone:z.record(z.union([z.string().max(40),z.number().min(0).max(1)])).default({})});
 const OutputSchema=z.object({reply:z.string().min(1).max(900),risk:z.enum(['low','medium','high','legal']),requiresApproval:z.boolean(),nextAction:z.string().max(350),memory:MemorySchema});
 export type JointDecision=z.infer<typeof OutputSchema>;
 export async function generateJoint(args:{model:string;purpose:string;externalId?:string;caseId?:string;input:string;memory?:ConversationMemory;persona?:'CHRISTIAN'|'JULLY';estimateOnly?:boolean}) {
@@ -38,6 +38,7 @@ export async function generateJoint(args:{model:string;purpose:string;externalId
     const output=OutputSchema.parse(JSON.parse(response.output_text));
     return {...output,estimate,dryRun:false};
   } catch(error) {
+    if(error instanceof z.ZodError) console.error('ai_output_validation',error.issues.map(issue=>({path:issue.path,code:issue.code})));
     if(!settled) await settleUsage(usageId,{error:'provider_or_usage_error'});
     throw new Error(settled?'invalid_output':'provider_unavailable');
   }
