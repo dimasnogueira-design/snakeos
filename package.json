@@ -1,0 +1,40 @@
+{
+  "name": "snake-os",
+  "version": "0.6.0",
+  "private": true,
+  "type": "module",
+  "description": "Orquestrador inteligente do WhatsApp da Venom Code: vendas, suporte, negociação e pessoal com guardrails.",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/src/index.js",
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "migrate": "tsx scripts/migrate.ts",
+    "migrate:production": "node dist/scripts/migrate.js",
+    "test": "vitest run --pool=threads --maxWorkers=1",
+    "demo:local": "tsx scripts/local-demo.ts",
+    "demo:router": "tsx scripts/demo-router.ts",
+    "import:whatsapp": "tsx scripts/import-whatsapp.ts",
+    "import:whatsapp:db": "tsx scripts/import-whatsapp-db.ts"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^5.1.0",
+    "openai": "^6.0.0",
+    "pg": "^8.13.3",
+    "pino": "^9.6.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@types/express": "^5.0.1",
+    "@types/node": "^22.13.14",
+    "@types/pg": "^8.11.11",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2",
+    "vitest": "^3.1.1"
+  }
+}

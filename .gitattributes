@@ -1,0 +1,2 @@
+* text=auto
+db/migrations/*.sql -text

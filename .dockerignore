@@ -1,0 +1,12 @@
+node_modules
+admin
+workers
+.git
+.env
+.env.*
+data/private
+dist
+tests
+*.zip
+*.log
+.superpowers

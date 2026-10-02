@@ -1,0 +1,29 @@
+services:
+  core:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      PORT: 8787
+      DATABASE_SCHEMA: snake
+      DATABASE_SSL: "true"
+      AUTO_SEND: "false"
+      QA_APPROVED: "false"
+      AUTONOMOUS_AUTHORIZED: "false"
+    ports:
+      - "127.0.0.1:8787:8787"
+  whatsapp:
+    profiles: [whatsapp]
+    build: ./workers/whatsapp
+    restart: unless-stopped
+    depends_on: [core]
+    env_file: .env
+    environment:
+      SNAKE_CORE_URL: http://core:8787
+      WHATSAPP_SESSION_PATH: /data/.wwebjs_auth
+      PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium
+    volumes:
+      - snake_whatsapp:/data
+volumes:
+  snake_whatsapp:
