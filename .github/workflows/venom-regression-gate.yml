@@ -1,0 +1,35 @@
+name: VENOM SNAKE — Regression and Dependency Gate
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: snake-quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validation:
+    name: Typecheck, tests, build and dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: TypeScript validation
+        run: npm run typecheck
+      - name: Existing Vitest regression suite
+        run: npm test
+      - name: Production build check
+        run: npm run build
+      - name: High/critical runtime dependency vulnerabilities
+        run: npm audit --omit=dev --audit-level=high
