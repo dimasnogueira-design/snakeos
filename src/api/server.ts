@@ -19,6 +19,7 @@ import { timingSafeEqual } from 'node:crypto';
 import { preflight } from '../policies/preflight.js';
 import { detectSystemMessage } from '../core/system-detector.js';
 import { isProtectedContact } from '../db/repository.js';
+import { createCommanderMission, getCommanderStatus, listCommanderMissions } from '../commander/store.js';
 
 const MessageSchema = z.object({
   externalMessageId: z.string().min(1).max(200).optional(),
@@ -144,6 +145,33 @@ export function createServer() {
   app.get('/v4/admin/summary', requireAdmin, async (_req, res) => {
     try { res.json(await getAdminSummary()); }
     catch (error) { res.status(500).json({ error: 'Não foi possível concluir a operação.' }); }
+  });
+
+  app.get('/v7/admin/commander/status', requireAdmin, async (_req, res) => {
+    try { res.json(await getCommanderStatus()); }
+    catch { res.status(503).json({ error: 'Commander indisponível.' }); }
+  });
+
+  app.get('/v7/admin/commander/missions', requireAdmin, async (req, res) => {
+    try {
+      const limit = Math.min(50, Math.max(1, Number(req.query.limit ?? 20)));
+      res.json({ missions: await listCommanderMissions(limit) });
+    } catch { res.status(503).json({ error: 'Não foi possível carregar as missões.' }); }
+  });
+
+  app.post('/v7/admin/commander/missions', requireAdmin, async (req, res) => {
+    try {
+      const body = z.object({ mission: z.string().min(1).max(4000) }).parse(req.body);
+      const suppliedKey = req.header('idempotency-key');
+      const idempotencyKey = suppliedKey ? z.string().uuid().parse(suppliedKey) : undefined;
+      const result = await createCommanderMission(body.mission, idempotencyKey);
+      res.status(result.duplicate ? 200 : 201).json({ mission: result });
+    } catch (error) {
+      if (error instanceof z.ZodError) return res.status(400).json({ error: 'Missão inválida ou chave de repetição inválida.' });
+      const message = error instanceof Error ? error.message : '';
+      if (message.includes('Commander data encryption')) return res.status(503).json({ error: 'A chave privada do Commander não está configurada.' });
+      res.status(503).json({ error: 'Não foi possível registrar a missão.' });
+    }
   });
 
   app.get('/v4/admin/contacts', requireAdmin, async (req, res) => {

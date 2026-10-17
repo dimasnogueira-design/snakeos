@@ -8,6 +8,12 @@ Notebook Windows. SNAKE CONTROL em http://127.0.0.1:13001, serviço em http://12
 
 Executar Iniciar-Snake.cmd e Conectar-Whatsapp.cmd. Manter o notebook ligado, com internet e sem suspender. Login em data/private/ACESSO-PAINEL.txt. Nunca publicar a pasta privada ou as sessões.
 
+## Centro de Comando privado
+
+O painel inclui o Commander para registrar missões e organizá-las em uma fila persistente. No modo notebook, uma chave AES-256 é criada em data/private/commander-data-key; o texto das missões fica cifrado no banco local. A tela mostra quais agentes estão somente especificados e quais conexões estão pendentes. O worker de execução ainda não está conectado: missões ficam registradas, sem chamadas a modelos, sem leitura de Gmail pelo serviço e sem envio externo. Para implantação fora do notebook, configure COMMANDER_DATA_KEY como segredo de 32 bytes e use um banco privado dedicado. As funções de finanças pessoais não devem compartilhar CRM comercial.
+
+As instruções dos especialistas ficam em skills/. Elas são runbooks de escopo e segurança; não significam que cada integração esteja ativa. Gmail requer OAuth próprio; WhatsApp continua em observação; cobrança e gestão de conflito exigem revisão humana.
+
 ## Segurança e custos
 
 Envio automático desligado. Inicialização força Observação. Grupos, Rafaella/contatos protegidos, códigos e notificações automáticas não passam pela IA. Mensagens durante atendimento humano permanecem no histórico, sem geração de rascunhos. Duplicatas não repetem chamadas. Chamadas fora da lista autorizada são rejeitadas. Áudio recebido só pode ser transcrito quando habilitado e relevante; nunca há envio de áudio.

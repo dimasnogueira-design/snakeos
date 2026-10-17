@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import UsagePanel from './UsagePanel';
 import ContactDetail from './ContactDetail';
+import CommanderPanel from './CommanderPanel';
 
 type AutomationMode = 'paused' | 'observation' | 'autonomous';
 type Summary = { automationMode: AutomationMode; whatsappStatus: string; openCases: number; messages24h: number; tokens24h: number; contactsByMode: Record<string, number> };
@@ -51,6 +52,7 @@ export default function Home() {
       </div>
     </section>
 
+    <CommanderPanel/>
     <UsagePanel usage={usage} onAction={onAction}/>
     {alerts.length>0&&<section className="panel"><h2>Alertas para revisão</h2>{alerts.slice(0,20).map(a=><div className="alert" key={a.id}><span>{a.display_name??'Sistema'} · {a.code}</span><button className="ghost" onClick={()=>onAction(`alerts/${a.id}`,'PATCH',{}).catch(()=>setError('Não foi possível concluir.'))}>Marcar como revisado</button></div>)}</section>}
     {selected&&<ContactDetail key={selected} id={selected} request={api} onClose={()=>setSelected('')}/>}

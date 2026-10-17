@@ -8,7 +8,14 @@ async function proxy(req: NextRequest, ctx: { params: Promise<{ path: string[] }
   const key = process.env.SNAKE_ADMIN_KEY;
   if (!base || !key) return NextResponse.json({ error: 'Core not configured' }, { status: 503 });
   const { path } = await ctx.params;
-  if(path.some(p=>p==='..'||p==='.'||p.includes('/')||p.includes('\\'))||!['summary','contacts','automation','usage','alerts','limits','circuit','estimate'].includes(path[0]))return NextResponse.json({error:'invalid_path'},{status:400});
+  const commander = path[0] === 'commander';
+  const validCommander = commander && path.length === 2 && (
+    (path[1] === 'status' && req.method === 'GET') ||
+    (path[1] === 'missions' && ['GET','POST'].includes(req.method))
+  );
+  const validLegacy = !commander && ['summary','contacts','automation','usage','alerts','limits','circuit','estimate'].includes(path[0]) &&
+    !path.some(p=>p==='..'||p==='.'||p.includes('/')||p.includes('\\'));
+  if(!validCommander&&!validLegacy)return NextResponse.json({error:'invalid_path'},{status:400});
   const suffix = path.map(encodeURIComponent).join('/');
   const query = req.nextUrl.search;
   const init: RequestInit = {
@@ -19,7 +26,8 @@ async function proxy(req: NextRequest, ctx: { params: Promise<{ path: string[] }
   };
   if (!['GET','HEAD'].includes(req.method)) init.body = await req.text();
   try {
-  const upstream = await fetch(`${base.replace(/\/$/, '')}/v4/admin/${suffix}${query}`, init);
+  const versionedPath = commander ? `/v7/admin/${suffix}` : `/v4/admin/${suffix}`;
+  const upstream = await fetch(`${base.replace(/\/$/, '')}${versionedPath}${query}`, init);
   const text = await upstream.text();
   return new NextResponse(text, { status: upstream.status, headers: { 'content-type': 'application/json','Cache-Control':'no-store' } });
   }catch{return NextResponse.json({error:'O servidor está indisponível. Tente novamente.'},{status:503,headers:{'Cache-Control':'no-store'}});}

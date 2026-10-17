@@ -12,6 +12,7 @@ import { processIncomingMessage } from '../src/memory/process-message.js';
 import { pool } from '../src/db/pool.js';
 import { env } from '../src/config/env.js';
 import { setContactMode,setContactAutomationPaused } from '../src/db/repository.js';
+import { createCommanderMission, listCommanderMissions } from '../src/commander/store.js';
 beforeAll(async()=>{
   state.db=new PGlite();
   for(const f of readdirSync('db/migrations').filter(f=>f.endsWith('.sql')).sort()){
@@ -21,6 +22,22 @@ beforeAll(async()=>{
 },30000);
 afterAll(async()=>{await state.db?.close();});
 describe('PostgreSQL cost and ingress integration',()=>{
+  it('stores a private Commander mission encrypted with durable, disabled jobs and idempotency',async()=>{
+    const oldKey=process.env.COMMANDER_DATA_KEY;process.env.COMMANDER_DATA_KEY='33'.repeat(32);
+    try {
+      const raw='Ler meus e-mails privados e organizar as cobranças pendentes';
+      const key='1b478b38-7138-4b28-a48b-4b5ad057f80e';
+      const created=await createCommanderMission(raw,key);
+      expect(created.executionEnabled).toBe(false);expect(created.jobs.map(j=>j.agentId)).toContain('GMAIL_SECRETARY');
+      const stored=(await pool.query('SELECT payload_ciphertext,status FROM commander_missions WHERE id=$1',[created.id])).rows[0];
+      expect(stored.payload_ciphertext).not.toContain(raw);expect(stored.status).toBe('awaiting_review');
+      const jobs=(await pool.query('SELECT external_action_enabled,execution_enabled FROM commander_jobs WHERE mission_id=$1',[created.id])).rows;
+      expect(jobs.length).toBeGreaterThan(1);expect(jobs.every((j:any)=>j.external_action_enabled===false&&j.execution_enabled===false)).toBe(true);
+      const duplicate=await createCommanderMission('conteúdo diferente não deve substituir',key);
+      expect(duplicate.duplicate).toBe(true);expect(duplicate.id).toBe(created.id);
+      expect((await listCommanderMissions()).map(m=>m.id)).toContain(created.id);
+    } finally {if(oldKey===undefined)delete process.env.COMMANDER_DATA_KEY;else process.env.COMMANDER_DATA_KEY=oldKey;}
+  });
   it('preserves takeover history without creating a draft or consuming AI',async()=>{
     await setContactMode('qa-takeover-customer','venom_sales');await setContactAutomationPaused('qa-takeover-customer',true);
     const message={externalMessageId:'takeover-inbound-1',contactId:'qa-takeover-customer',chatId:'qa-takeover-customer',isGroup:false,text:'Ja tenho dominio para meu site',timestamp:'2026-10-02T12:00:00Z'};
