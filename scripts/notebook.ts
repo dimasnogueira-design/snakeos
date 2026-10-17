@@ -15,6 +15,9 @@ process.env.MOCK_AI=String(!paidTest);process.env.AI_DRY_RUN=String(!paidTest);p
 process.env.QA_APPROVED='false';process.env.AUTONOMOUS_AUTHORIZED='false';process.env.AUDIO_ENABLED='false';
 process.env.WHATSAPP_ENABLED='false';process.env.PORT='18788';
 await mkdir('data/private',{recursive:true});
+const commanderKeyPath='data/private/commander-data-key';
+try{process.env.COMMANDER_DATA_KEY=(await readFile(commanderKeyPath,'utf8')).trim();}
+catch(error:any){if(error.code!=='ENOENT')throw error;const key=randomBytes(32).toString('hex');await writeFile(commanderKeyPath,key,{mode:0o600});process.env.COMMANDER_DATA_KEY=key;}
 const credentialsPath='data/private/local-access.json';
 let credentials:{username:string,password:string,workerKey:string,adminKey:string};
 try{credentials=JSON.parse(await readFile(credentialsPath,'utf8'));}
